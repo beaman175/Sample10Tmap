@@ -3,6 +3,8 @@ package com.example.dongja94.sampletmap;
 import android.Manifest;
 import android.content.Context;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
@@ -10,13 +12,17 @@ import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
+import com.skp.Tmap.TMapMarkerItem;
+import com.skp.Tmap.TMapPoint;
 import com.skp.Tmap.TMapView;
 
 public class MainActivity extends AppCompatActivity {
@@ -61,7 +67,34 @@ public class MainActivity extends AppCompatActivity {
             }
         });
         mapView.setSKPMapApiKey(API_KEY);
+        Button btn = (Button)findViewById(R.id.btn_marker);
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                TMapPoint point = mapView.getCenterPoint();
+
+                addMarker("marker" + markerid++,point);
+            }
+        });
         mLM = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+    }
+
+    private int markerid = 0;
+
+    private void addMarker(String markerid, TMapPoint point) {
+        TMapMarkerItem item = new TMapMarkerItem();
+        item.setTMapPoint(point);
+        Bitmap icon = ((BitmapDrawable)ContextCompat.getDrawable(this, android.R.drawable.ic_input_add)).getBitmap();
+        item.setIcon(icon);
+        item.setPosition(0.5f, 1);
+        Bitmap lefticon = ((BitmapDrawable)ContextCompat.getDrawable(this, android.R.drawable.ic_dialog_info)).getBitmap();
+        Bitmap righticon = ((BitmapDrawable)ContextCompat.getDrawable(this, android.R.drawable.ic_input_get)).getBitmap();
+        item.setCalloutLeftImage(lefticon);
+        item.setCalloutTitle("Marker");
+        item.setCalloutSubTitle("marker test");
+        item.setCalloutRightButtonImage(righticon);
+        item.setCanShowCallout(true);
+        mapView.addMarkerItem(markerid, item);
     }
 
     boolean isInitialized = false;
@@ -69,8 +102,15 @@ public class MainActivity extends AppCompatActivity {
         Toast.makeText(this, "setup map", Toast.LENGTH_SHORT).show();
         isInitialized = true;
         mapView.setTrafficInfo(true);
+        mapView.setOnCalloutRightButtonClickListener(new TMapView.OnCalloutRightButtonClickCallback() {
+            @Override
+            public void onCalloutRightButton(TMapMarkerItem tMapMarkerItem) {
+                Toast.makeText(MainActivity.this, "marker : " + tMapMarkerItem.getID(), Toast.LENGTH_SHORT).show();
+            }
+        });
         if (cacheLocation != null) {
             moveMap(cacheLocation);
+            setMyLocation(cacheLocation);
             cacheLocation = null;
         }
 //        mapView.setSightVisible(true);
@@ -132,6 +172,7 @@ public class MainActivity extends AppCompatActivity {
             }
             cacheLocation = null;
             moveMap(location);
+            setMyLocation(location);
         }
 
         @Override
@@ -153,6 +194,13 @@ public class MainActivity extends AppCompatActivity {
     private void moveMap(Location location) {
         mapView.setCenterPoint(location.getLongitude(), location.getLatitude());
         mapView.setZoomLevel(17);
+    }
+
+    private void setMyLocation(Location location) {
+        mapView.setLocationPoint(location.getLongitude(), location.getLatitude());
+        Bitmap icon = ((BitmapDrawable)(ContextCompat.getDrawable(this, R.mipmap.ic_launcher))).getBitmap();
+        mapView.setIcon(icon);
+        mapView.setIconVisibility(true);
     }
 
     @Override
